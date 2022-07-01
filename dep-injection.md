@@ -4,7 +4,9 @@ _A short glossary of techniques._
 
 These are some notes I took about [Hands-On Dependency Injection in Go](https://www.goodreads.com/book/show/43268781-hands-on-dependency-injection-in-go)
 
-The author of the book explains 6 different techniques of Dependency Injection. YMMV.
+The author of the book explains 6 different techniques of Dependency Injection.
+
+As many things in life, all is a trade-off: complexity, decoupling, test-induced damage. YMMV.
 
 ## 1. Monkey-Patching
 
@@ -47,6 +49,8 @@ func NewFoo(t Thinger) *Bar {
 
 Where the interface has been factored out from the struct, for the methods that are used only (**SRP**).
 
+This also satisfies the _"accept an interface, return a struct"_ mantra.
+
 
 ## 3. Method injection
 
@@ -88,8 +92,27 @@ func NewConfigConstructor(cfg Config, foo) *Struct{}
 
 * Just inject what we need by assigning to the private variable.
 * All uses in the code replace refs to the field by a getter that will do an instantiation.
-* Better to replace `nil` by sensible defaults.
+* Better to replace `nil` by sensible defaults (in the getter).
 * It is best used when we need it just for testing.
+
+```Go
+type Thing struct {
+  data DataSourceJIT
+}
+
+func (t *Thing) DoStuff(id int) (Foo, error) {
+  return m.getData().Load(id)
+}
+
+func (t Thing) getData() DataSourceJIT {
+  if t.data == nil {
+    t.data = NewDataSourceJIT()
+  }
+  return t.data
+}
+```
+
+This method perhaps has a too-heavy object-orientation smell, but can come handy if we're injecting only for testability.
 
 ## 6. Off-the-shelf Injectors
 
